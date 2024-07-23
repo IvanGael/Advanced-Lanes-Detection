@@ -156,7 +156,7 @@ class LaneLines:
         else:
             top_right_box[icon_start_y:icon_start_y + icon_y, icon_start_x:icon_start_x + icon_x] = icon_img
         
-        # Prepare text and boxes for the top right corner
+        # top right corner
         top_right_texts = [
             {"text": msg, "pos": (box_width // 2, 240)},
             {"text": curvature_msg, "pos": (box_width // 2, 320)},
@@ -169,7 +169,7 @@ class LaneLines:
             text_y = item["pos"][1] + text_size[1] // 2
             cv2.putText(top_right_box, item["text"], (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, violet, 2, cv2.LINE_AA)
 
-        # Prepare text and boxes for the top left corner
+        # top left corner
         top_left_texts = [
             {"text": "On the right track", "pos": (box_width // 2, 80)},
             {"text": f"{abs(pos):.2f}m away from center", "pos": (box_width // 2, 160)},

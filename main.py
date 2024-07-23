@@ -16,13 +16,12 @@ import numpy as np
 import matplotlib.image as mpimg
 import cv2
 from docopt import docopt
-from IPython.display import HTML, Video
 from moviepy.editor import VideoFileClip
 from CameraCalibration import CameraCalibration
 from Thresholding import *
 from PerspectiveTransformation import *
 from LaneLines import *
-from yolo import CarDetection  # Import the new CarDetection class
+from yolo import CarDetection  
 
 class FindLaneLines:
     def __init__(self):
@@ -30,7 +29,7 @@ class FindLaneLines:
         self.thresholding = Thresholding()
         self.transform = PerspectiveTransformation()
         self.lanelines = LaneLines()
-        self.car_detection = CarDetection()  # Initialize the CarDetection class
+        self.car_detection = CarDetection()  
 
     def forward(self, img):
         out_img = np.copy(img)
