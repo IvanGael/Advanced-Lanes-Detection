@@ -11,40 +11,33 @@ class PerspectiveTransformation:
         M_inv (np.array): Matrix to transform image from top view to front view
     """
     def __init__(self):
-        """Init PerspectiveTransformation."""
-        self.src = np.float32([(550, 460),     # top-left
-                               (150, 720),     # bottom-left
-                               (1200, 720),    # bottom-right
-                               (770, 460)])    # top-right
-        self.dst = np.float32([(100, 0),
-                               (100, 720),
-                               (1100, 720),
-                               (1100, 0)])
-        self.M = cv2.getPerspectiveTransform(self.src, self.dst)
-        self.M_inv = cv2.getPerspectiveTransform(self.dst, self.src)
+        self.src = np.float32([
+            [0.43, 0.65],
+            [0.58, 0.65],
+            [0.1, 1],
+            [0.9, 1]
+        ])
+        self.dst = np.float32([
+            [0, 0],
+            [1, 0],
+            [0, 1],
+            [1, 1]
+        ])
+        self.img_size = None
 
-    def forward(self, img, img_size=(1280, 720), flags=cv2.INTER_LINEAR):
-        """ Take a front view image and transform to top view
+    def update_matrices(self, img_size):
+        self.img_size = img_size
+        src_scaled = self.src * np.float32([img_size[0], img_size[1]])
+        dst_scaled = self.dst * np.float32([img_size[0], img_size[1]])
+        self.M = cv2.getPerspectiveTransform(src_scaled, dst_scaled)
+        self.M_inv = cv2.getPerspectiveTransform(dst_scaled, src_scaled)
 
-        Parameters:
-            img (np.array): A front view image
-            img_size (tuple): Size of the image (width, height)
-            flags : flag to use in cv2.warpPerspective()
+    def forward(self, img, flags=cv2.INTER_LINEAR):
+        if self.img_size != img.shape[:2][::-1]:
+            self.update_matrices(img.shape[:2][::-1])
+        return cv2.warpPerspective(img, self.M, self.img_size, flags=flags)
 
-        Returns:
-            Image (np.array): Top view image
-        """
-        return cv2.warpPerspective(img, self.M, img_size, flags=flags)
-
-    def backward(self, img, img_size=(1280, 720), flags=cv2.INTER_LINEAR):
-        """ Take a top view image and transform it to front view
-
-        Parameters:
-            img (np.array): A top view image
-            img_size (tuple): Size of the image (width, height)
-            flags (int): flag to use in cv2.warpPerspective()
-
-        Returns:
-            Image (np.array): Front view image
-        """
-        return cv2.warpPerspective(img, self.M_inv, img_size, flags=flags)
+    def backward(self, img, flags=cv2.INTER_LINEAR):
+        if self.img_size != img.shape[:2][::-1]:
+            self.update_matrices(img.shape[:2][::-1])
+        return cv2.warpPerspective(img, self.M_inv, self.img_size, flags=flags)

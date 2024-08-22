@@ -4,18 +4,13 @@
 Advanced Lane Lines Detection
 
 Usage:
-    py main.py [--video] INPUT_PATH OUTPUT_PATH 
-
-Options:
-
--h --help                               Help
---video                                 Process video file instead of image
+    py main.py --choice CHOICE --input INPUT_PATH --output OUTPUT_PATH 
 """
 
+import argparse
 import numpy as np
 import matplotlib.image as mpimg
 import cv2
-from docopt import docopt
 from moviepy.editor import VideoFileClip
 from CameraCalibration import CameraCalibration
 from Thresholding import *
@@ -62,12 +57,21 @@ class FindLaneLines:
         out_clip.write_videofile(output_path, audio=False)
 
 def main():
-    args = docopt(__doc__)
-    input = args['INPUT_PATH']
-    output = args['OUTPUT_PATH']
+    parser = argparse.ArgumentParser(description="Advanced Lane Lines Detection")
+    parser.add_argument("--choice", choices=['video', 'image'], default='video',
+                        help="Choose between 'video' and 'image' (default: video)")
+    parser.add_argument("--input", help="Choose an input video or image")
+    parser.add_argument("--output", help="Choose an output video or image")
+
+
+    args = parser.parse_args()
+
+    input = args.input
+    output = args.output
 
     findLaneLines = FindLaneLines()
-    if args['--video']:
+
+    if args.choice == 'video':
         findLaneLines.process_video(input, output)
     else:
         findLaneLines.process_image(input, output)

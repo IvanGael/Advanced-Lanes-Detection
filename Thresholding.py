@@ -20,28 +20,20 @@ class Thresholding:
         pass
 
     def forward(self, img):
-        """ Take an image and extract all relavant pixels.
-
-        Parameters:
-            img (np.array): Input image
-
-        Returns:
-            binary (np.array): A binary image represent all positions of relavant pixels.
-        """
         hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
         hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
-        h_channel = hls[:,:,0]
-        l_channel = hls[:,:,1]
+        lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
+        
+        # S channel from HLS space
         s_channel = hls[:,:,2]
-        v_channel = hsv[:,:,2]
-
-        right_lane = threshold_rel(l_channel, 0.8, 1.0)
-        right_lane[:,:750] = 0
-
-        left_lane = threshold_abs(h_channel, 20, 30)
-        left_lane &= threshold_rel(v_channel, 0.7, 1.0)
-        left_lane[:,550:] = 0
-
-        img2 = left_lane | right_lane
-
-        return img2
+        s_thresh = threshold_rel(s_channel, 0.7, 1.0)
+        
+        # B channel from LAB space
+        b_channel = lab[:,:,2]
+        b_thresh = threshold_rel(b_channel, 0.8, 1.0)
+        
+        # Combination of S and B channel thresholds
+        combined = np.zeros_like(s_channel)
+        combined[(s_thresh == 255) | (b_thresh == 255)] = 255
+        
+        return combined

@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import matplotlib.image as mpimg
+from scipy.signal import find_peaks
 
 def hist(img):
     bottom_half = img[img.shape[0] // 2:, :]
@@ -49,9 +50,12 @@ class LaneLines:
         assert(len(img.shape) == 2)
         out_img = np.dstack((img, img, img))
         histogram = hist(img)
-        midpoint = histogram.shape[0] // 2
-        leftx_base = np.argmax(histogram[:midpoint])
-        rightx_base = np.argmax(histogram[midpoint:]) + midpoint
+        peaks = self.find_peaks(histogram)
+        if len(peaks) == 2:
+            leftx_base, rightx_base = peaks
+        else:
+            return [], [], [], [], out_img
+
         leftx_current = leftx_base
         rightx_current = rightx_base
         y_current = img.shape[0] + self.window_height // 2
@@ -72,13 +76,51 @@ class LaneLines:
                 rightx_current = np.int32(np.mean(good_right_x))
         return leftx, lefty, rightx, righty, out_img
 
+    def find_peaks(self, histogram):
+        midpoint = len(histogram) // 2
+        leftx_base = np.argmax(histogram[:midpoint])
+        rightx_base = np.argmax(histogram[midpoint:]) + midpoint
+        return leftx_base, rightx_base
+    
+    def validate_lanes(self, left_fit, right_fit, img_shape):
+        ploty = np.linspace(0, img_shape[0]-1, img_shape[0])
+        left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+        right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+        
+        # Check if lanes are roughly parallel
+        lane_width = np.mean(right_fitx - left_fitx)
+        if lane_width < 100 or lane_width > 1500:  
+            return False
+        
+        # Check if lanes are not too close to the image edges
+        if np.min(left_fitx) < 0 or np.max(right_fitx) > img_shape[1]:
+            return False
+        
+        return True
+
     def fit_poly(self, img):
         leftx, lefty, rightx, righty, out_img = self.find_lane_pixels(img)
-        print(f"Left points: {len(lefty)}, Right points: {len(righty)}")
-        if len(lefty) > 1500:
-            self.left_fit = np.polyfit(lefty, leftx, 2)
-        if len(righty) > 1500:
-            self.right_fit = np.polyfit(righty, rightx, 2)
+    
+        if len(lefty) > self.minpix and len(righty) > self.minpix:
+            left_fit = np.polyfit(lefty, leftx, 2)
+            right_fit = np.polyfit(righty, rightx, 2)
+            
+            if self.validate_lanes(left_fit, right_fit, img.shape):
+                self.left_fit = left_fit
+                self.right_fit = right_fit
+            else:
+                # Use previous fit if available, otherwise use default values
+                if self.left_fit is None:
+                    self.left_fit = np.array([0, 0, img.shape[1]//4])
+                if self.right_fit is None:
+                    self.right_fit = np.array([0, 0, 3*img.shape[1]//4])
+        else:
+            # Use previous fit if available, otherwise use default values
+            if self.left_fit is None:
+                self.left_fit = np.array([0, 0, img.shape[1]//4])
+            if self.right_fit is None:
+                self.right_fit = np.array([0, 0, 3*img.shape[1]//4])
+
         maxy = img.shape[0] - 1
         miny = img.shape[0] // 3
         if len(lefty):
@@ -90,6 +132,8 @@ class LaneLines:
         ploty = np.linspace(miny, maxy, img.shape[0])
         left_fitx = self.left_fit[0] * ploty**2 + self.left_fit[1] * ploty + self.left_fit[2]
         right_fitx = self.right_fit[0] * ploty**2 + self.right_fit[1] * ploty + self.right_fit[2]
+
+        print(f'left_fitx : {left_fitx} , right_fitx : {right_fitx}')
         for i, y in enumerate(ploty):
             l = int(left_fitx[i])
             r = int(right_fitx[i])

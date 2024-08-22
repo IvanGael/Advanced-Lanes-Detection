@@ -1,6 +1,5 @@
 numpy
 opencv-python
 matplotlib
-docopt
 moviepy
 ultralytics

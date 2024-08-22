@@ -31,6 +31,5 @@ pip install -r requirements.txt
 
 ### Run 
 ```bash
-python main.py INPUT_IMAGE OUTPUT_IMAGE_PATH
-python main.py --video INPUT_VIDEO OUTPUT_VIDEO_PATH
+py main.py --choice CHOICE --input INPUT_PATH --output OUTPUT_PATH 
 ```
