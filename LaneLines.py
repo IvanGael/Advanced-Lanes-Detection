@@ -47,10 +47,12 @@ class LaneLines:
         self.nonzeroy = np.array(self.nonzero[0])
 
     def find_lane_pixels(self, img):
+        print(f'len(img.shape) : {len(img.shape)}')
         assert(len(img.shape) == 2)
         out_img = np.dstack((img, img, img))
         histogram = hist(img)
         peaks = self.find_peaks(histogram)
+        print(f'len(peaks) : {len(peaks)}')
         if len(peaks) == 2:
             leftx_base, rightx_base = peaks
         else:
@@ -133,7 +135,7 @@ class LaneLines:
         left_fitx = self.left_fit[0] * ploty**2 + self.left_fit[1] * ploty + self.left_fit[2]
         right_fitx = self.right_fit[0] * ploty**2 + self.right_fit[1] * ploty + self.right_fit[2]
 
-        print(f'left_fitx : {left_fitx} , right_fitx : {right_fitx}')
+        # print(f'left_fitx : {left_fitx} , right_fitx : {right_fitx}')
         for i, y in enumerate(ploty):
             l = int(left_fitx[i])
             r = int(right_fitx[i])
@@ -176,7 +178,7 @@ class LaneLines:
         box_width = 400
         box_height = 500
         black = (0, 25, 51)
-        violet = (255, 0, 127)
+        pink = (255, 0, 127)
         
         # Top left box
         top_left_box = out_img[:box_height, :box_width]
@@ -211,13 +213,13 @@ class LaneLines:
             text_size = cv2.getTextSize(item["text"], cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)[0]
             text_x = item["pos"][0] - text_size[0] // 2
             text_y = item["pos"][1] + text_size[1] // 2
-            cv2.putText(top_right_box, item["text"], (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, violet, 2, cv2.LINE_AA)
+            cv2.putText(top_right_box, item["text"], (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, pink, 2, cv2.LINE_AA)
 
         # top left corner
         top_left_texts = [
             {"text": "On the right track", "pos": (box_width // 2, 80)},
             {"text": f"{abs(pos):.2f}m away from center", "pos": (box_width // 2, 160)},
-            {"text": f"Visibility: {lane_visibility}", "pos": (box_width // 2, 320)},
+            # {"text": f"Visibility: {lane_visibility}", "pos": (box_width // 2, 320)},
             {"text": f"Speed Limit: {self.speed_limit}", "pos": (box_width // 2, 400)},
             {"text": departure_warning, "pos": (box_width // 2, 480)},
         ]
@@ -226,7 +228,7 @@ class LaneLines:
             text_size = cv2.getTextSize(item["text"], cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)[0]
             text_x = item["pos"][0] - text_size[0] // 2
             text_y = item["pos"][1] + text_size[1] // 2
-            cv2.putText(top_left_box, item["text"], (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, violet, 2, cv2.LINE_AA)
+            cv2.putText(top_left_box, item["text"], (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, pink, 2, cv2.LINE_AA)
 
         return out_img
 

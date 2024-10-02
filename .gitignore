@@ -142,3 +142,8 @@ cython_debug/
 
 
 17.mp4
+
+calibration_frames
+output_videos
+
+frame_saver.py

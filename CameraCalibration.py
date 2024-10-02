@@ -1,60 +1,61 @@
-import numpy as np
 import cv2
+import numpy as np
 import glob
-import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
+import os
 
-class CameraCalibration():
-    """ Class that calibrate camera using chessboard images.
+class CameraCalibration:
+    def __init__(self, chessboard_size=(9, 6)):
+        self.chessboard_size = chessboard_size
+        self.objpoints = []  # 3D points in real world space
+        self.imgpoints = []  # 2D points in image plane
+        self.mtx = None
+        self.dist = None
 
-    Attributes:
-        mtx (np.array): Camera matrix 
-        dist (np.array): Distortion coefficients
-    """
-    def __init__(self, image_dir, nx, ny, debug=False):
-        """ Init CameraCalibration.
-
-        Parameters:
-            image_dir (str): path to folder contains chessboard images
-            nx (int): width of chessboard (number of squares)
-            ny (int): height of chessboard (number of squares)
+    def extract_frames(self, video_path, num_frames=10, output_dir='calibration_frames'):
         """
-        fnames = glob.glob("{}/*".format(image_dir))
-        objpoints = []
-        imgpoints = []
-        
-        # Coordinates of chessboard's corners in 3D
-        objp = np.zeros((nx*ny, 3), np.float32)
-        objp[:,:2] = np.mgrid[0:nx, 0:ny].T.reshape(-1, 2)
-        
-        # Go through all chessboard images
-        for f in fnames:
-            img = mpimg.imread(f)
+        Extracts frames from the input video to use for camera calibration.
+        """
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
-            # Convert to grayscale image
-            gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        cap = cv2.VideoCapture(video_path)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        frame_ids = np.linspace(0, total_frames - 1, num_frames, dtype=int)
 
-            # Find chessboard corners
-            ret, corners = cv2.findChessboardCorners(img, (nx, ny))
+        frames = []
+        for i, frame_id in enumerate(frame_ids):
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
+            ret, frame = cap.read()
             if ret:
-                imgpoints.append(corners)
-                objpoints.append(objp)
+                frame_path = os.path.join(output_dir, f'frame_{i}.jpg')
+                cv2.imwrite(frame_path, frame)
+                frames.append(frame)
 
-        shape = (img.shape[1], img.shape[0])
-        ret, self.mtx, self.dist, _, _ = cv2.calibrateCamera(objpoints, imgpoints, shape, None, None)
+        cap.release()
+        return frames
 
-        if not ret:
-            raise Exception("Unable to calibrate camera")
+    def calibrate(self, frames):
+        """
+        Calibrates the camera using the extracted frames.
+        """
+        objp = np.zeros((self.chessboard_size[0] * self.chessboard_size[1], 3), np.float32)
+        objp[:, :2] = np.mgrid[0:self.chessboard_size[0], 0:self.chessboard_size[1]].T.reshape(-1, 2)
+
+        for frame in frames:
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            ret, corners = cv2.findChessboardCorners(gray, self.chessboard_size, None)
+
+            if ret:
+                self.objpoints.append(objp)
+                self.imgpoints.append(corners)
+
+        if self.objpoints and self.imgpoints:
+            ret, self.mtx, self.dist, _, _ = cv2.calibrateCamera(self.objpoints, self.imgpoints, gray.shape[::-1], None, None)
+            return ret
+
+        return False
 
     def undistort(self, img):
-        """ Return undistort image.
-
-        Parameters:
-            img (np.array): Input image
-
-        Returns:
-            Image (np.array): Undistorted image
-        """
-        # Convert to grayscale image
-        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        return cv2.undistort(img, self.mtx, self.dist, None, self.mtx)
+        if self.mtx is not None and self.dist is not None:
+            return cv2.undistort(img, self.mtx, self.dist, None, self.mtx)
+        return img
