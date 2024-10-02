@@ -145,5 +145,6 @@ cython_debug/
 
 calibration_frames
 output_videos
+tested_images
 
 frame_saver.py
