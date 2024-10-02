@@ -47,12 +47,10 @@ class LaneLines:
         self.nonzeroy = np.array(self.nonzero[0])
 
     def find_lane_pixels(self, img):
-        print(f'len(img.shape) : {len(img.shape)}')
         assert(len(img.shape) == 2)
         out_img = np.dstack((img, img, img))
         histogram = hist(img)
         peaks = self.find_peaks(histogram)
-        print(f'len(peaks) : {len(peaks)}')
         if len(peaks) == 2:
             leftx_base, rightx_base = peaks
         else:
