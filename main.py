@@ -8,6 +8,7 @@ Usage:
 """
 
 import argparse
+import os
 import numpy as np
 import matplotlib.image as mpimg
 import cv2
@@ -74,19 +75,27 @@ def main():
     parser = argparse.ArgumentParser(description="Advanced Lane Lines Detection")
     parser.add_argument("--choice", choices=['video', 'image'], default='video',
                         help="Choose between 'video' and 'image' (default: video)")
-    parser.add_argument("--input", help="Choose an input video or image")
+    parser.add_argument("--input", required=True, help="Choose an input video or image")
     parser.add_argument("--output", help="Choose an output video or image")
     args = parser.parse_args()
 
-    input = args.input
-    output = args.output
+    input_file = f"output_videos/{args.input}"
+    output_file = args.output
+
+    # if output_file is not provided
+    if output_file is None:
+        input_name, input_ext = os.path.splitext(os.path.basename(input_file))
+        if args.choice == 'video':
+            output_file = f"output_videos/{input_name}_output.mp4"
+        else:
+            output_file = f"output_videos/{input_name}_output{input_ext}"
+
     findLaneLines = FindLaneLines()
 
     if args.choice == 'video':
-        findLaneLines.process_video(input, output)
+        findLaneLines.process_video(input_file, output_file)
     else:
-        findLaneLines.process_image(input, output)
-
+        findLaneLines.process_image(input_file, output_file)
 
 if __name__ == "__main__":
     main()
