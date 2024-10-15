@@ -1,21 +1,23 @@
-# yolo.py
-
 from ultralytics import YOLO
-import numpy as np
 
 class CarDetection:
-    def __init__(self, model_path='yolov8n'):
+    def __init__(self, model_path='yolo11n'):
         self.model = YOLO(model_path)
 
     def detect_cars(self, img):
-        results = self.model(img, classes=[2, 3, 5, 7])  # 2: car, 3: motorcycle, 5: bus, 7: truck
+        results = self.model(img, classes=[2, 3, 5, 7])  # Cars, motorcycles, buses, trucks
         return results[0]
 
-    def draw_boxes(self, img, results):
+    def draw_boxes(self, results):
         annotated_img = results.plot()
         return annotated_img
 
-    def process_image(self, img):
-        results = self.detect_cars(img)
-        annotated_img = self.draw_boxes(img, results)
-        return annotated_img
+    def get_vehicle_distances(self, results, camera_height=1.5):
+        distances = []
+        for r in results.boxes:
+            bbox = r.xyxy[0]
+            # Distance estimation using bounding box height
+            bbox_height = bbox[3] - bbox[1]
+            distance = (camera_height * 720) / bbox_height  
+            distances.append(distance)
+        return distances

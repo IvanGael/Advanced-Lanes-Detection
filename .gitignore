@@ -148,3 +148,5 @@ output_videos
 tested_images
 
 frame_saver.py
+
+*.pt

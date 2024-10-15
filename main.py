@@ -26,6 +26,7 @@ class FindLaneLines:
         self.transform = PerspectiveTransformation()
         self.lanelines = LaneLines()
         self.car_detection = CarDetection()
+        self.camera_matrix = None  # To store camera matrix after calibration
 
     def calibrate_camera_for_video(self, video_path):
         # Extract frames from video for calibration
@@ -42,7 +43,7 @@ class FindLaneLines:
         img = self.calibration.undistort(img)
 
         # Perform car detection
-        car_detection_img = self.car_detection.process_image(img)
+        results = self.car_detection.detect_cars(img)
 
         img = self.transform.forward(img)
         img = self.thresholding.forward(img)
@@ -51,8 +52,16 @@ class FindLaneLines:
         out_img = cv2.addWeighted(out_img, 1, img, 0.6, 0)
         out_img = self.lanelines.plot(out_img)
 
-        # Combine lane detection and car detection
-        final_img = cv2.addWeighted(out_img, 0.7, car_detection_img, 0.3, 0)
+        annotated_img = self.car_detection.draw_boxes(results)
+
+        # Generate aerial (top) view
+        top_view_img = self.transform.get_aerial_view(out_img)
+
+        # Overlay aerial view at bottom-right corner
+        overlay_img = self.transform.overlay_aerial_view(out_img, top_view_img)
+
+        # Combine the final images
+        final_img = cv2.addWeighted(overlay_img, 0.7, annotated_img, 0.3, 0)
 
         return final_img
 
