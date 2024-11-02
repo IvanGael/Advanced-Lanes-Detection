@@ -4,7 +4,7 @@
 Advanced Lane Lines Detection
 
 Usage:
-    py main.py --choice CHOICE --input INPUT_PATH --output OUTPUT_PATH 
+    py main.py --choice CHOICE --input INPUT_PATH 
 """
 
 import argparse
