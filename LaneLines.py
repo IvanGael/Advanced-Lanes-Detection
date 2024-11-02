@@ -1,11 +1,6 @@
 import cv2
 import numpy as np
 import matplotlib.image as mpimg
-from scipy.signal import find_peaks
-
-def hist(img):
-    bottom_half = img[img.shape[0] // 2:, :]
-    return np.sum(bottom_half, axis=0)
 
 class LaneLines:
     def __init__(self):
@@ -15,18 +10,19 @@ class LaneLines:
         self.nonzero = None
         self.nonzerox = None
         self.nonzeroy = None
-        self.clear_visibility = True
         self.dir = []
-        self.left_curve_img = mpimg.imread('turn-left.png')
-        self.right_curve_img = mpimg.imread('turn-right.png')
-        self.keep_straight_img = mpimg.imread('decision.png')
+        self.left_curve_img = mpimg.imread('assets/turn-left3.png')
+        self.right_curve_img = mpimg.imread('assets/turn-right3.png')
+        self.keep_straight_img = mpimg.imread('assets/decision.png')
         self.left_curve_img = cv2.normalize(src=self.left_curve_img, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
         self.right_curve_img = cv2.normalize(src=self.right_curve_img, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
         self.keep_straight_img = cv2.normalize(src=self.keep_straight_img, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
         self.nwindows = 9
         self.margin = 100
         self.minpix = 50
-        self.speed_limit = "60 km/h"
+    
+    def hist(self, img):
+        return np.sum(img[img.shape[0] // 2:, :], axis=0)
 
     def forward(self, img):
         self.extract_features(img)
@@ -49,7 +45,7 @@ class LaneLines:
     def find_lane_pixels(self, img):
         assert(len(img.shape) == 2)
         out_img = np.dstack((img, img, img))
-        histogram = hist(img)
+        histogram = self.hist(img)
         peaks = self.find_peaks(histogram)
         if len(peaks) == 2:
             leftx_base, rightx_base = peaks
@@ -138,8 +134,7 @@ class LaneLines:
             l = int(left_fitx[i])
             r = int(right_fitx[i])
             y = int(y)
-            cv2.line(out_img, (l, y), (r, y), (0, 255, 0))
-        lR, rR, pos = self.measure_curvature()
+            cv2.line(out_img, (l, y), (r, y), (14, 204, 230))
         return out_img
 
     def plot(self, out_img):
@@ -169,14 +164,12 @@ class LaneLines:
             icon_img = self.right_curve_img
             msg = "Right turn"
         lane_width = self.calculate_lane_width()
-        lane_visibility = "Clear" if self.clear_visibility else "Poor"
-        departure_warning = self.calculate_departure_warning(pos)
         
         # Define box properties
         box_width = 400
         box_height = 500
         black = (0, 25, 51)
-        pink = (255, 0, 127)
+        pink = (255, 8, 185)
         
         # Top left box
         top_left_box = out_img[:box_height, :box_width]
@@ -256,12 +249,3 @@ class LaneLines:
             return lane_width * 3.7 / 700  # Convert from pixels to meters
         else:
             return 0.0
-
-    def calculate_departure_warning(self, pos):
-        """ Generate a departure warning based on the vehicle's position """
-        if pos > 0.5:
-            return "Warning: Departing Right"
-        elif pos < -0.5:
-            return "Warning: Departing Left"
-        else:
-            return "Lane Centered"

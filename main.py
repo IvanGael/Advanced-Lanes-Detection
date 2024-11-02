@@ -57,7 +57,7 @@ class FindLaneLines:
         # Generate aerial (top) view
         top_view_img = self.transform.get_aerial_view(out_img)
 
-        # Overlay aerial view at bottom-right corner
+        # Overlay aerial view at top center
         overlay_img = self.transform.overlay_aerial_view(out_img, top_view_img)
 
         # Combine the final images
