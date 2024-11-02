@@ -210,10 +210,6 @@ class LaneLines:
         top_left_texts = [
             {"text": "On the right track", "pos": (box_width // 2, 80)},
             {"text": f"{abs(pos):.2f}m away from center", "pos": (box_width // 2, 160)},
-            # {"text": f"Visibility: {lane_visibility}", "pos": (box_width // 2, 320)},
-            # {"text": f"Speed Limit: {self.speed_limit}", "pos": (box_width // 2, 400)},
-            # {"text": departure_warning, "pos": (box_width // 2, 480)},
-            # {"text": departure_warning, "pos": (box_width // 2, 320)},
         ]
 
         for item in top_left_texts:
